@@ -1,0 +1,30 @@
+# Arduino IDE files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Build outputs
+build/
+*.hex
+*.bin
+*.elf
+*.map
+
+# Libraries (if you want to exclude them)
+# libraries/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*

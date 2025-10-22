@@ -345,9 +345,10 @@ void screenHome() {
   tft.drawString("Project 5", 50, 125);
   
   // Personal info
-  tft.setFreeFont(FF6);
+  tft.setFreeFont(FF1);
   tft.drawString("Izzy Burley and Samuel Scalzo", 50, 170);
-  tft.drawString("izzyburley@vt.edu, srscalzo@vt.edu", 50, 200);
+  tft.drawString("izzyburley@vt.edu", 50, 200);
+  tft.drawString("srscalzo@vt.edu", 50, 220);
 }
 
 // Connect to the server once an advertised device is found that matches the target

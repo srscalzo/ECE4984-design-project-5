@@ -105,7 +105,7 @@ static BLERemoteCharacteristic* pRemoteHumidCharacteristic;
 // ordering.
 //
 // ** UPDATE THIS VALUE TO MATCH YOUR SERVER DEVICE. **
-uint8_t bd_addr[6] = {0x2C, 0xF7, 0xF1, 0x1F, 0xA5, 0xC2};  // Kit 31 BLE MAC address
+uint8_t bd_addr[6] = {0xc2, 0xa5, 0x1f, 0xf1, 0xf7, 0x2c};  // Kit 31 BLE MAC address
 BLEAddress TempServer(bd_addr);
 
 // Define the callback routine for new temperature data from the server from a notification. Display
@@ -129,6 +129,31 @@ static void notifyTempCallback(
     Serial.print(" of data length ");
     Serial.println(length);
     Serial.print(" * Temperature: ");
+    Serial.println(valueBuffer);
+    #endif
+}
+
+// Define the callback routine for new humidity data from the server from a notification. Display
+// the humidity value. The callback parameters provide a pointer to the remote characteristic,
+// the data (as bytes) and the length of the data (number of bytes).
+static void notifyHumidCallback(
+  BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
+    // Convert value to null terminated string and display it as humidity.
+    char valueBuffer[8];
+    int j;
+    for (j=0; j<length; ++j) {
+      valueBuffer[j] = (char) *pData;
+      ++pData;
+    }
+    valueBuffer[length] = NULL;
+    displayHumid(valueBuffer);
+
+    #ifdef DEBUG
+    Serial.print("STATUS: Notify callback for humidity characteristic: ");
+    Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
+    Serial.print(" of data length ");
+    Serial.println(length);
+    Serial.print(" * Humidity: ");
     Serial.println(valueBuffer);
     #endif
 }
@@ -291,7 +316,7 @@ void loop() {
   // If the client is in the STATE_SCAN (scanning) state and the scan duration has been
   // exceeded, the the scan has failed to find a server with the target address. The
   // client updates the state and displays the state.
-  else if (clientState == STATE_SCAN && scanFailedTime < millis()) {
+  else if (clientState == STATE_SCAN && millis() > scanFailedTime) {
     #ifdef DEBUG
     Serial.println("ERROR: Scanning ended without finding a target device, so stopping");
     #endif
@@ -317,12 +342,12 @@ void screenHome() {
   tft.drawString("Virginia Tech", 50, 50);
   tft.drawString("ECE 4984", 50, 75);
   tft.drawString("Fall 2025", 50, 100);
-  tft.drawString("Project 4", 50, 125);
+  tft.drawString("Project 5", 50, 125);
   
   // Personal info
   tft.setFreeFont(FF6);
-  tft.drawString("Izzy Burley", 50, 170);
-  tft.drawString("izzyburley@vt.edu", 50, 200);
+  tft.drawString("Izzy Burley and Samuel Scalzo", 50, 170);
+  tft.drawString("izzyburley@vt.edu, srscalzo@vt.edu", 50, 200);
 }
 
 // Connect to the server once an advertised device is found that matches the target
@@ -434,7 +459,7 @@ bool connectToServer() {
     // Get the humidity string and display it.
     std::string humidValue = pRemoteHumidCharacteristic->readValue();
     char humidBuffer[8];
-    strcpy(humidBuffer, value.c_str());
+    strcpy(humidBuffer, humidValue.c_str());
     displayHumid(humidBuffer);
 
     #ifdef DEBUG
@@ -464,6 +489,25 @@ bool connectToServer() {
   else {
     #ifdef DEBUG
     Serial.println("ERROR: Notifications not supported for temperature");
+    #endif
+
+    // Disconnect and return false.
+    pClient->disconnect();
+    return false;
+  }  
+
+  // Register for notifications for the humidity characteristic. Fail
+  // if the client cannot receive notifications for this characteristic.
+  if(pRemoteHumidCharacteristic->canNotify()) {
+    #ifdef DEBUG
+    Serial.println("STATUS: Can use notifications for humidity");
+    #endif
+
+    pRemoteHumidCharacteristic->registerForNotify(notifyHumidCallback);
+  }
+  else {
+    #ifdef DEBUG
+    Serial.println("ERROR: Notifications not supported for humidity");
     #endif
 
     // Disconnect and return false.
@@ -520,7 +564,7 @@ void displayTempText(char* displayTemp) {
 // Display the provided humidity value (string)
 void displayHumid(char* displayHumid) {
   // Fill in the display area to erase old values
-  tft.fillRect((TFT_HEIGHT/2)+4, (TFT_WIDTH/2)-25, (TFT_HEIGHT/2)-10, 42, TFT_BLUE);
+  tft.fillRect((TFT_HEIGHT/2)+4, (TFT_WIDTH/2)-25, (TFT_HEIGHT/2)-10, 42, TFT_DARKGREEN);
 
   // Display humidity string
   tft.setFreeFont(FSSB24);
